@@ -10,11 +10,11 @@ COPY .eslintrc.js ./
 COPY tsconfig.json ./
 COPY tsconfig.build.json ./
 COPY webpack-hmr.config.js ./
-COPY .env ./
 
 RUN npm i
 RUN npm i --save-dev webpack-node-externals run-script-webpack-plugin webpack
 
+COPY .env ./
 COPY src ./src
 
 CMD ["npm", "run", "start:dev"]

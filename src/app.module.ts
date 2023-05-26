@@ -13,7 +13,6 @@ import { TelegramModule } from "./telegram/telegram.module";
         MongooseModule.forRoot(`mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`),
         TelegramModule,
     ],
-
     controllers: [AppController],
     providers: [AppService],
 })

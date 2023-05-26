@@ -8,6 +8,8 @@ services:
       - "7070:7070"
     volumes:
       - ./../src/:/usr/src/app/src/
+      - ./../.env:/usr/stc/app/src/.env
+    command: npm run start:dev
   mongo:
     image: mongo:4.4
     restart: always
@@ -16,3 +18,5 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: "admin1"
     volumes:
       - ./data:/data/db
+    ports:
+      - "27017:27017"

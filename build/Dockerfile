@@ -16,5 +16,3 @@ RUN npm i --save-dev webpack-node-externals run-script-webpack-plugin webpack
 
 COPY .env ./
 COPY src ./src
-
-CMD ["npm", "run", "start:dev"]

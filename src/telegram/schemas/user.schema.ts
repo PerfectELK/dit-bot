@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import mongoose, { Document } from "mongoose"
-import { UserMessage } from "./userMessage.schema"
+import mongoose, { Document } from 'mongoose'
+import { UserMessage } from './userMessage.schema'
+import { Role } from './roles.schema'
 
 
 export type UserDocument = User & Document
@@ -22,6 +23,12 @@ export class User {
 
   @Prop()
       userName: string
+
+  @Prop({ type: [mongoose.Types.ObjectId], ref: 'Role' })
+      role: Role | null
+
+  @Prop({ type: [mongoose.Types.ObjectId], ref: 'User' })
+      reviewer: User | null
 
   @Prop({ type: [mongoose.Types.ObjectId], ref: 'UserMessage' })
       messages: UserMessage[]

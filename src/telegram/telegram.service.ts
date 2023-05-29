@@ -1,20 +1,24 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-import { UserMessagesRepository } from "./repositories/userMessages.repository";
-
 const TelegramBot = require('node-telegram-bot-api')
-import { UsersRepository } from "./repositories/users.repository"
-import { User } from "./schemas/user.schema"
+
+import { InjectModel } from '@nestjs/mongoose'
+import { UserMessagesRepository } from './repositories/userMessages.repository'
+import { UsersRepository } from './repositories/users.repository'
+import { User } from './schemas/user.schema'
 import { APP_URL } from '../app.service'
-import { Injectable } from '@nestjs/common'
-import { UserMessage } from "./schemas/userMessage.schema";
+import { Injectable, OnModuleInit } from '@nestjs/common'
+import { UserMessage } from './schemas/userMessage.schema'
+import { Role } from './schemas/roles.schema'
+import { Model } from 'mongoose'
 
 @Injectable()
-export class TelegramService {
+export class TelegramService implements OnModuleInit {
     private readonly token: string
     public bot: any
     constructor(
         private readonly usersRepository: UsersRepository,
-        private readonly userMessagesRepository: UserMessagesRepository
+        private readonly userMessagesRepository: UserMessagesRepository,
+        @InjectModel(Role.name) private roleModel: Model<Role>
     ) {
         this.token = process.env.TELEGAM_TOKEN
         this.bot = new TelegramBot(this.token, {
@@ -23,10 +27,34 @@ export class TelegramService {
         this.enableWebHooks()
     }
 
+    async onModuleInit(): Promise<any> {
+        await this.seedRolesIsNeed()
+    }
+
     async enableWebHooks() {
-        const is = await this.bot.setWebHook(`${APP_URL}/telegram/message`)
-        this.bot.onText(/\/start/, msg => {
-            this.bot.sendMessage(msg.chat.id, 'Кекв')
+        await this.bot.setWebHook(`${APP_URL}/telegram/message`)
+        this.bot.onText(/\/start/,async (msg) => {
+            const user: User = await this.usersRepository.findOne({
+                telegramId: msg.from.id
+            })
+            if (user.role !== null) {
+                this.bot.sendMessage('Ты уже зарегался, че спамишь, кожанный!?')
+                return
+            }
+            const roles = await this.roleModel.find()
+            this.bot.sendMessage(msg.from.id, 'Well♂CUM♂!\n\rВыбери свой отдел.', {
+                'reply_markup': {
+                    'resize_keyboard': true,
+                    'inline_keyboard': [
+                        roles.map(item => {
+                            return {
+                                text: `Отдел ${item.name}`,
+                                callback_data: `/select-role-${item.id}`
+                            }
+                        })
+                    ]
+                }
+            })
         })
     }
 
@@ -42,7 +70,9 @@ export class TelegramService {
             firstName,
             lastName,
             userName,
-            messages: []
+            messages: [],
+            reviewer: null,
+            role: null
         })
     }
 
@@ -67,5 +97,23 @@ export class TelegramService {
             chatId,
             user
         })
+    }
+
+    async seedRolesIsNeed(): Promise<void> {
+        const roles = await this.roleModel.find()
+        if (roles.length > 0) {
+            return
+        }
+
+        await this.roleModel.insertMany([
+            {
+                id: 1,
+                name: 'Web'
+            },
+            {
+                id: 2,
+                name: '1ASS'
+            }
+        ])
     }
 }

@@ -1,6 +1,6 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
-import { User } from "./user.schema"
-import mongoose, { Document } from "mongoose"
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import { User } from './user.schema'
+import mongoose, { Document } from 'mongoose'
 
 
 export type UserMessageDocument = UserMessage & Document

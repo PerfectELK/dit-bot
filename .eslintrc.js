@@ -22,6 +22,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     'indent': ['error', 4],
     'no-extra-semi': 2,
-    'semi': ['error', 'never']
+    'semi': ['error', 'never'],
+    'quotes': ['error', 'single']
   },
 };

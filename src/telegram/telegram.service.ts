@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const TelegramBot = require('node-telegram-bot-api')
 
+import { markupKeyboard } from '../types/telegamKeyboard'
 import { InjectModel } from '@nestjs/mongoose'
 import { UserMessagesRepository } from './repositories/userMessages.repository'
 import { UsersRepository } from './repositories/users.repository'
@@ -144,7 +145,7 @@ export class TelegramService implements OnModuleInit {
         )
     }
 
-    getOptionsButtons(): Array<any>
+    getOptionsButtons(): Array<markupKeyboard>
     {
         return [
             {
@@ -159,7 +160,7 @@ export class TelegramService implements OnModuleInit {
         ]
     }
 
-    async getRolesButtons(): Promise<Array<any>>
+    async getRolesButtons(): Promise<Array<markupKeyboard>>
     {
         const roles = await this.roleModel.find()
         return roles.map(item => {
@@ -172,7 +173,7 @@ export class TelegramService implements OnModuleInit {
     async replyMarkup(
         chatId: number,
         message: string,
-        keys: Array<any>
+        keys: Array<markupKeyboard>
     ): Promise<void>
     {
         this.bot.sendMessage(chatId, message, {
@@ -195,9 +196,12 @@ export class TelegramService implements OnModuleInit {
         msg: any
     ): Promise<void>
     {
-        await this.updateUser(msg.from.id, {
+        const user: User = await this.updateUser(msg.from.id, {
             role
         })
+        if (!user) {
+            return
+        }
         this.bot.sendMessage(msg.from.id, `Теперь ты в отделе ${role.name}`)
     }
 }

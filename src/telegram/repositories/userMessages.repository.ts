@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
 import { FilterQuery, Model } from "mongoose"
-import { UserMessage, UserMessageDocument } from "../schemas/userMessage.schema"
+import { UserMessage, UserMessageDocument } from '../schemas/userMessage.schema'
 
 @Injectable()
 export class UserMessagesRepository {

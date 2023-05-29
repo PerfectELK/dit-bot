@@ -10,6 +10,10 @@ export class TelegramController {
   @Post('message')
     async ping(@Req() req): Promise<string> {
         console.log(req.body)
+        if (req.body.callback_query) {
+            // Todo логика колбэков, потом сделаю, а может и нет
+            return ''
+        }
         const message = req.body.message
         let user = await this.telegramService.getUserByTelegramId(message.from.id)
         if (!user) {

@@ -33,27 +33,24 @@ export class TelegramService implements OnModuleInit {
 
     async enableWebHooks() {
         await this.bot.setWebHook(`${APP_URL}/telegram/message`)
-        this.bot.onText(/\/start/,async (msg) => {
-            const user: User = await this.usersRepository.findOne({
-                telegramId: msg.from.id
-            })
-            if (user.role !== null) {
-                this.bot.sendMessage('Ты уже зарегался, че спамишь, кожанный!?')
-                return
-            }
-            const roles = await this.roleModel.find()
-            this.bot.sendMessage(msg.from.id, 'Well♂CUM♂!\n\rВыбери свой отдел.', {
-                'reply_markup': {
-                    'resize_keyboard': true,
-                    'inline_keyboard': [
-                        roles.map(item => {
-                            return {
-                                text: `Отдел ${item.name}`,
-                                callback_data: `/select-role-${item.id}`
-                            }
-                        })
-                    ]
-                }
+        this.bot.onText(/\/start/, (msg) => {
+            this.botStartMessage(msg)
+        })
+        this.bot.onText(/\/options/, (msg) => {
+            this.botOptionsMessage(msg)
+        })
+        this.bot.onText(/Опции/, (msg) => {
+            this.botOptionsMessage(msg)
+        })
+
+        const roles = await this.roleModel.find()
+        roles.forEach((item): void => {
+            const re = new RegExp(item.name)
+            this.bot.onText(re, (msg) => {
+                this.userSelectRole(
+                    item,
+                    msg
+                )
             })
         })
     }
@@ -71,8 +68,8 @@ export class TelegramService implements OnModuleInit {
             lastName,
             userName,
             messages: [],
+            role: null,
             reviewer: null,
-            role: null
         })
     }
 
@@ -115,5 +112,92 @@ export class TelegramService implements OnModuleInit {
                 name: '1ASS'
             }
         ])
+    }
+
+    async botStartMessage(msg: any): Promise<void>
+    {
+        const user: User = await this.usersRepository.findOne({
+            telegramId: msg.from.id
+        })
+        if (user.role !== null) {
+            this.bot.sendMessage(msg.from.id, 'Ты уже зарегался, че спамишь, кожанный!?')
+            return
+        }
+        await this.runRoleSelectMenu(msg.from.id)
+    }
+
+    async botOptionsMessage(msg: any): Promise<void>
+    {
+        await this.replyMarkup(
+            msg.from.id,
+            'Вот список доступных опций',
+            this.getOptionsButtons()
+        )
+    }
+
+    async runRoleSelectMenu(chatId: number): Promise<void>
+    {
+        await this.replyMarkup(
+            chatId, 
+            'Well♂CUM♂!\n\rВыбери свой отдел.',
+            await this.getRolesButtons()
+        )
+    }
+
+    getOptionsButtons(): Array<any>
+    {
+        return [
+            {
+                text: 'Выбор отдела'
+            },
+            {
+                text: 'Мой ревьювер'
+            },
+            {
+                text: 'Я провожу ревью'
+            }
+        ]
+    }
+
+    async getRolesButtons(): Promise<Array<any>>
+    {
+        const roles = await this.roleModel.find()
+        return roles.map(item => {
+            return {
+                text: `${item.name}`,
+            }
+        })
+    }
+
+    async replyMarkup(
+        chatId: number,
+        message: string,
+        keys: Array<any>
+    ): Promise<void>
+    {
+        this.bot.sendMessage(chatId, message, {
+            reply_markup: {
+                'resize_keyboard': true,
+                'keyboard': [keys]
+            }
+        })
+    }
+
+    async hideCustomMarkup(
+        chatId: number
+    ): Promise<void>
+    {
+        // Todo скрытие кастомных кнопок
+    }
+
+    async userSelectRole(
+        role: Role,
+        msg: any
+    ): Promise<void>
+    {
+        await this.updateUser(msg.from.id, {
+            role
+        })
+        this.bot.sendMessage(msg.from.id, `Теперь ты в отделе ${role.name}`)
     }
 }

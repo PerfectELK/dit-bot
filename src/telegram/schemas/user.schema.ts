@@ -24,11 +24,11 @@ export class User {
   @Prop()
       userName: string
 
-  @Prop({ type: [mongoose.Types.ObjectId], ref: 'Role' })
-      role: Role | null
+  @Prop({ type: mongoose.Types.ObjectId, ref: 'Role' })
+      role: Role
 
-  @Prop({ type: [mongoose.Types.ObjectId], ref: 'User' })
-      reviewer: User | null
+  @Prop({ type: mongoose.Types.ObjectId, ref: 'User' })
+      reviewer: User
 
   @Prop({ type: [mongoose.Types.ObjectId], ref: 'UserMessage' })
       messages: UserMessage[]

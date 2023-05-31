@@ -1,23 +1,7 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { User } from './user.schema'
-import mongoose, { Document } from 'mongoose'
+import mongoose from 'mongoose'
 
-
-export type UserMessageDocument = UserMessage & Document
-@Schema({
-    timestamps: true,
+export const UserMessageSchema = new mongoose.Schema({
+    message: String,
+    chatId: Number,
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 })
-export class UserMessage {
-
-  @Prop()
-      message: string
-
-  @Prop()
-      chatId: number
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
-      user: User
-
-}
-
-export const UserMessageSchema = SchemaFactory.createForClass(UserMessage)

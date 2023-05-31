@@ -5,11 +5,11 @@ import { markupKeyboard } from '../types/telegamKeyboard'
 import { InjectModel } from '@nestjs/mongoose'
 import { UserMessagesRepository } from './repositories/userMessages.repository'
 import { UsersRepository } from './repositories/users.repository'
-import { User } from './schemas/user.schema'
+import { User } from './interfaces/user.interface'
 import { APP_URL } from '../app.service'
 import { Injectable, OnModuleInit } from '@nestjs/common'
-import { UserMessage } from './schemas/userMessage.schema'
-import { Role } from './schemas/roles.schema'
+import { Role } from './interfaces/role.interface'
+import { UserMessage } from './interfaces/userMessage.interface'
 import { Model } from 'mongoose'
 
 @Injectable()
@@ -19,7 +19,7 @@ export class TelegramService implements OnModuleInit {
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly userMessagesRepository: UserMessagesRepository,
-        @InjectModel(Role.name) private roleModel: Model<Role>
+        @InjectModel('Role') private roleModel: Model<Role>
     ) {
         this.token = process.env.TELEGAM_TOKEN
         this.bot = new TelegramBot(this.token, {
@@ -68,7 +68,6 @@ export class TelegramService implements OnModuleInit {
             firstName,
             lastName,
             userName,
-            messages: [],
             role: null
         })
     }

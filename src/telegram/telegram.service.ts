@@ -47,8 +47,8 @@ export class TelegramService implements OnModuleInit {
         const roles = await this.roleModel.find()
         roles.forEach((item): void => {
             const re = new RegExp(item.name)
-            this.bot.onText(re, (msg) => {
-                this.userSelectRole(
+            this.bot.onText(re, async (msg) => {
+                await this.userSelectRole(
                     item,
                     msg
                 )
@@ -69,8 +69,7 @@ export class TelegramService implements OnModuleInit {
             lastName,
             userName,
             messages: [],
-            role: null,
-            reviewer: null,
+            role: null
         })
     }
 

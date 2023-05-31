@@ -7,9 +7,11 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { UsersRepository } from './repositories/users.repository'
 import { UserMessagesRepository } from './repositories/userMessages.repository'
 import { Role, RoleSchema } from './schemas/roles.schema'
+import { ReviewModule } from '../review/review.module'
 
 @Module({
     imports: [
+        ReviewModule,
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema },
             { name: UserMessage.name, schema: UserMessageSchema },
@@ -17,6 +19,10 @@ import { Role, RoleSchema } from './schemas/roles.schema'
         ])
     ],
     controllers: [TelegramController],
-    providers: [TelegramService, UsersRepository, UserMessagesRepository]
+    providers: [
+        TelegramService,
+        UsersRepository,
+        UserMessagesRepository
+    ]
 })
 export class TelegramModule {}

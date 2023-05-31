@@ -1,4 +1,4 @@
-import { Controller, Post, Req } from '@nestjs/common'
+import { Controller, Get, Post, Req } from '@nestjs/common'
 import { TelegramService } from './telegram.service'
 
 @Controller('telegram')
@@ -7,7 +7,7 @@ export class TelegramController {
     private telegramService: TelegramService
     ) {}
 
-  @Post('message')
+    @Post('message')
     async ping(@Req() req): Promise<string> {
         console.log(req.body)
         if (req.body.callback_query) {
@@ -24,12 +24,13 @@ export class TelegramController {
                 message.from.username,
             )
         }
-        user.messages.push(await this.telegramService.createUserMessage(
+        const mess = await this.telegramService.createUserMessage(
             message.text,
             message.chat.id,
             user
-        ))
-        await this.telegramService.updateUser(user.telegramId, user)
+        )
+        user.messages.push(mess)
+        await user.save()
         this.telegramService.bot.processUpdate(req.body)
         return ''
     }

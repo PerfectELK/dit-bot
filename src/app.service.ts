@@ -6,6 +6,4 @@ ConfigModule.forRoot({
 })
 export const APP_URL: string = process.env.APP_URL
 @Injectable()
-export class AppService {
-
-}
+export class AppService {}

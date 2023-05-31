@@ -8,9 +8,8 @@ export type UserDocument = User & Document
 
 @Schema({
     timestamps: true,
-    _id: true
 })
-export class User {
+export class User extends Document {
 
   @Prop()
       telegramId: number
@@ -24,13 +23,10 @@ export class User {
   @Prop()
       userName: string
 
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'Role' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Role' })
       role: Role
 
-  @Prop({ type: mongoose.Types.ObjectId, ref: 'User' })
-      reviewer: User
-
-  @Prop({ type: [mongoose.Types.ObjectId], ref: 'UserMessage' })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'UserMessage' })
       messages: UserMessage[]
 
 }

@@ -6,7 +6,6 @@ import mongoose, { Document } from 'mongoose'
 export type UserMessageDocument = UserMessage & Document
 @Schema({
     timestamps: true,
-    _id: true
 })
 export class UserMessage {
 
@@ -16,7 +15,7 @@ export class UserMessage {
   @Prop()
       chatId: number
 
-  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'User'}])
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
       user: User
 
 }

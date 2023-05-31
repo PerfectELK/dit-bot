@@ -11,7 +11,7 @@ services:
       - ./../.env:/usr/src/app/src/.env
     command: npm run start:dev
   mongo:
-    image: mongo:4.4
+    image: mongo:6.0
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: "user"

@@ -34,14 +34,17 @@ export class TelegramService implements OnModuleInit {
 
     async enableWebHooks() {
         await this.bot.setWebHook(`${APP_URL}/telegram/message`)
-        this.bot.onText(/\/start/, (msg) => {
-            this.botStartMessage(msg)
+        this.bot.onText(/\/start/,async (msg) => {
+            await this.botStartMessage(msg)
         })
-        this.bot.onText(/\/options/, (msg) => {
-            this.botOptionsMessage(msg)
+        this.bot.onText(/\/options/,async (msg) => {
+            await this.botOptionsMessage(msg)
         })
-        this.bot.onText(/Опции/, (msg) => {
-            this.botOptionsMessage(msg)
+        this.bot.onText(/Опции/, async (msg) => {
+            await this.botOptionsMessage(msg)
+        })
+        this.bot.onText(/Выбор отдела/, async (msg) => {
+            await this.runRoleSelectMenu(msg.from.id)
         })
 
         const roles = await this.roleModel.find()
@@ -108,7 +111,7 @@ export class TelegramService implements OnModuleInit {
             },
             {
                 id: 2,
-                name: '1ASS'
+                name: '1C'
             }
         ])
     }
@@ -138,7 +141,7 @@ export class TelegramService implements OnModuleInit {
     {
         await this.replyMarkup(
             chatId, 
-            'Well♂CUM♂!\n\rВыбери свой отдел.',
+            'Выбери свой отдел.',
             await this.getRolesButtons()
         )
     }
@@ -182,11 +185,16 @@ export class TelegramService implements OnModuleInit {
         })
     }
 
-    async hideCustomMarkup(
-        chatId: number
+    async sendMessageWithHideMarkup(
+        chatId: number,
+        message: string
     ): Promise<void>
     {
-        // Todo скрытие кастомных кнопок
+        await this.bot.sendMessage(chatId, message, {
+            reply_markup: {
+                hide_keyboard: true,
+            }
+        })
     }
 
     async userSelectRole(
@@ -200,6 +208,7 @@ export class TelegramService implements OnModuleInit {
         if (!user) {
             return
         }
-        this.bot.sendMessage(msg.from.id, `Теперь ты в отделе ${role.name}`)
+
+        await this.sendMessageWithHideMarkup(msg.from.id, `Теперь ты в отделе ${role.name}`)
     }
 }

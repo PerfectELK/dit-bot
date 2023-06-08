@@ -73,6 +73,70 @@ export class TelegramService implements OnModuleInit {
             await this.reviewService.generateRandomReviewers()
             await this.sendAllReviewInfo()
         })
+
+        this.bot.onText(/\/my_reviewer/, async(msg): Promise<void> => {
+            const user = await this.usersRepository.findOne({
+                telegramId: msg.from.id
+            })
+            if (!user) {
+                return
+            }
+
+            const reviews: Review[] = await this.reviewModel.aggregate([
+                {
+                    '$lookup': {
+                        from: 'users',
+                        localField: 'reviewer',
+                        foreignField: '_id',
+                        as: 'reviewer'
+                    }
+                },
+                { $unwind: '$reviewer'},
+                {
+                    $match: { user: user._id }
+                }
+            ])
+
+            if (!reviews.length) {
+                return
+            }
+
+            for (const review of reviews) {
+                await this.bot.sendMessage(msg.from.id, `Твой код проверяет @${review.reviewer.userName}`)
+            }
+        })
+
+        this.bot.onText(/\/i_reviewer/, async(msg): Promise<void> => {
+            const user = await this.usersRepository.findOne({
+                telegramId: msg.from.id
+            })
+            if (!user) {
+                return
+            }
+
+            const reviews: Review[] = await this.reviewModel.aggregate([
+                {
+                    '$lookup': {
+                        from: 'users',
+                        localField: 'user',
+                        foreignField: '_id',
+                        as: 'user'
+                    }
+                },
+                { $unwind: '$user'},
+                {
+                    $match: { reviewer: user._id }
+                }
+            ])
+
+            if (!reviews.length) {
+                return
+            }
+
+            for (const review of reviews) {
+                await this.bot.sendMessage(msg.from.id, `Ты проверяешь код @${review.user.userName}`)
+            }
+        })
     }
 
     async createUser(

@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const TelegramBot = require('node-telegram-bot-api')
-
+import { Review } from '../review/interfaces/review.interface'
+import { ReviewService } from '../review/review.service'
 import { markupKeyboard } from '../types/telegamKeyboard'
 import { InjectModel } from '@nestjs/mongoose'
 import { UserMessagesRepository } from './repositories/userMessages.repository'
@@ -16,10 +17,16 @@ import { Model } from 'mongoose'
 export class TelegramService implements OnModuleInit {
     private readonly token: string
     public bot: any
+    private admin_chat_ids: number[] = [
+        212866381, // losev
+        575861797  // leontev
+    ]
     constructor(
+        private readonly reviewService: ReviewService,
         private readonly usersRepository: UsersRepository,
         private readonly userMessagesRepository: UserMessagesRepository,
-        @InjectModel('Role') private roleModel: Model<Role>
+        @InjectModel('Role') private roleModel: Model<Role>,
+        @InjectModel('Review') private reviewModel: Model<Review>,
     ) {
         this.token = process.env.TELEGAM_TOKEN
         this.bot = new TelegramBot(this.token, {
@@ -34,28 +41,37 @@ export class TelegramService implements OnModuleInit {
 
     async enableWebHooks() {
         await this.bot.setWebHook(`${APP_URL}/telegram/message`)
-        this.bot.onText(/\/start/,async (msg) => {
+        this.bot.onText(/\/start/,async (msg): Promise<void> => {
             await this.botStartMessage(msg)
         })
-        this.bot.onText(/\/options/,async (msg) => {
+        this.bot.onText(/\/options/,async (msg): Promise<void> => {
             await this.botOptionsMessage(msg)
         })
-        this.bot.onText(/Опции/, async (msg) => {
+        this.bot.onText(/Опции/, async (msg): Promise<void> => {
             await this.botOptionsMessage(msg)
         })
-        this.bot.onText(/Выбор отдела/, async (msg) => {
+        this.bot.onText(/Выбор отдела/, async (msg): Promise<void> => {
             await this.runRoleSelectMenu(msg.from.id)
         })
 
         const roles = await this.roleModel.find()
         roles.forEach((item): void => {
             const re = new RegExp(item.name)
-            this.bot.onText(re, async (msg) => {
+            this.bot.onText(re, async (msg): Promise<void> => {
                 await this.userSelectRole(
                     item,
                     msg
                 )
             })
+        })
+
+        this.bot.onText(/\/reviewers_generate/, async(msg): Promise<void> => {
+            if (!this.admin_chat_ids.includes(msg.from.id)) {
+                return
+            }
+
+            await this.reviewService.generateRandomReviewers()
+            await this.sendAllReviewInfo()
         })
     }
 
@@ -210,5 +226,36 @@ export class TelegramService implements OnModuleInit {
         }
 
         await this.sendMessageWithHideMarkup(msg.from.id, `Теперь ты в отделе ${role.name}`)
+    }
+
+    async sendAllReviewInfo(): Promise<void> {
+        const reviews: Review[] = await this.reviewModel.aggregate([
+            {
+                '$lookup': {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user'},
+            {
+                '$lookup': {
+                    from: 'users',
+                    localField: 'reviewer',
+                    foreignField: '_id',
+                    as: 'reviewer'
+                }
+            },
+            { $unwind: '$reviewer'},
+        ])
+
+        for (const value of reviews) {
+            const user = value.user
+            const reviewer = value.reviewer
+
+            await this.bot.sendMessage(user.telegramId, `Твой код проверяет @${reviewer.userName}`)
+            await this.bot.sendMessage(reviewer.telegramId, `Ты проверяешь код @${user.userName}`)
+        }
     }
 }

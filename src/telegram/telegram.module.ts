@@ -8,6 +8,7 @@ import { UsersRepository } from './repositories/users.repository'
 import { UserMessagesRepository } from './repositories/userMessages.repository'
 import { RoleSchema } from './schemas/roles.schema'
 import { ReviewModule } from '../review/review.module'
+import { ReviewSchema } from '../review/schemas/review.schema'
 
 @Module({
     imports: [
@@ -15,7 +16,8 @@ import { ReviewModule } from '../review/review.module'
         MongooseModule.forFeature([
             { name: 'User', schema: UserSchema },
             { name: 'UserMessage', schema: UserMessageSchema },
-            { name: 'Role', schema: RoleSchema }
+            { name: 'Role', schema: RoleSchema },
+            { name: 'Review', schema: ReviewSchema },
         ])
     ],
     controllers: [TelegramController],

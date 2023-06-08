@@ -32,7 +32,7 @@ export class ReviewService {
             { $unwind: '$role'}
         ])
 
-        roles.forEach(await (async (role: Role)=> {
+        for (const role of roles) {
             const usersByRole: User[] = users.filter((user: User): boolean => {
                 return user.role.id === role.id
             })
@@ -56,29 +56,8 @@ export class ReviewService {
                 })
                 await review.save()
             }
-        }))
-    }
+        }
 
-    async sendAllReviewInfo(): Promise<void> {
-        const reviews = await this.reviewModel.aggregate([
-            {
-                '$lookup': {
-                    from: 'users',
-                    localField: 'user',
-                    foreignField: '_id',
-                    as: 'user'
-                }
-            },
-            { $unwind: '$role'},
-            {
-                '$lookup': {
-                    from: 'users',
-                    localField: 'reviewer',
-                    foreignField: '_id',
-                    as: 'reviewer'
-                }
-            },
-        ])
     }
 
 

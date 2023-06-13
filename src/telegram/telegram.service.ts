@@ -17,10 +17,7 @@ import { Model } from 'mongoose'
 export class TelegramService implements OnModuleInit {
     private readonly token: string
     public bot: any
-    private admin_chat_ids: number[] = [
-        212866381, // losev
-        575861797  // leontev
-    ]
+    private admin_chat_ids: number[]
     constructor(
         private readonly reviewService: ReviewService,
         private readonly usersRepository: UsersRepository,
@@ -32,6 +29,9 @@ export class TelegramService implements OnModuleInit {
         this.bot = new TelegramBot(this.token, {
             webHook: true
         })
+        this.admin_chat_ids = process.env.TELEGRAM_ADMINS.split(',').map((item) => {
+            return parseInt(item)
+        })
         this.enableWebHooks()
     }
 
@@ -40,7 +40,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     async enableWebHooks() {
-        await this.bot.setWebHook(`${APP_URL}/telegram/message`)
+        await this.bot.setWebHook(`${APP_URL}/telegram/message/${process.env.APP_KEY}`)
         this.bot.onText(/\/start/,async (msg): Promise<void> => {
             await this.botStartMessage(msg)
         })
@@ -75,67 +75,25 @@ export class TelegramService implements OnModuleInit {
         })
 
         this.bot.onText(/\/my_reviewer/, async(msg): Promise<void> => {
-            const user = await this.usersRepository.findOne({
-                telegramId: msg.from.id
-            })
-            if (!user) {
-                return
-            }
-
-            const reviews: Review[] = await this.reviewModel.aggregate([
-                {
-                    '$lookup': {
-                        from: 'users',
-                        localField: 'reviewer',
-                        foreignField: '_id',
-                        as: 'reviewer'
-                    }
-                },
-                { $unwind: '$reviewer'},
-                {
-                    $match: { user: user._id }
-                }
-            ])
-
-            if (!reviews.length) {
-                return
-            }
-
-            for (const review of reviews) {
-                await this.bot.sendMessage(msg.from.id, `Твой код проверяет @${review.reviewer.userName}`)
-            }
+            await this.getMyReviewer(msg)
+        })
+        this.bot.onText(/Мой ревьювер/, async(msg): Promise<void> => {
+            await this.getMyReviewer(msg)
         })
 
         this.bot.onText(/\/i_reviewer/, async(msg): Promise<void> => {
-            const user = await this.usersRepository.findOne({
-                telegramId: msg.from.id
-            })
-            if (!user) {
-                return
-            }
+            await this.getUsersWhoIReview(msg)
+        })
+        this.bot.onText(/Я провожу ревью/, async(msg): Promise<void> => {
+            await this.getUsersWhoIReview(msg)
+        })
 
-            const reviews: Review[] = await this.reviewModel.aggregate([
-                {
-                    '$lookup': {
-                        from: 'users',
-                        localField: 'user',
-                        foreignField: '_id',
-                        as: 'user'
-                    }
-                },
-                { $unwind: '$user'},
-                {
-                    $match: { reviewer: user._id }
-                }
-            ])
+        this.bot.onText(/\/disable_user/, async(msg): Promise<void> => {
+            await this.disableUser(msg)
+        })
 
-            if (!reviews.length) {
-                return
-            }
-
-            for (const review of reviews) {
-                await this.bot.sendMessage(msg.from.id, `Ты проверяешь код @${review.user.userName}`)
-            }
+        this.bot.onText(/\/enable_user/, async(msg): Promise<void> => {
+            await this.enableUser(msg)
         })
     }
 
@@ -151,7 +109,8 @@ export class TelegramService implements OnModuleInit {
             firstName,
             lastName,
             userName,
-            role: null
+            role: null,
+            is_active: true
         })
     }
 
@@ -321,5 +280,108 @@ export class TelegramService implements OnModuleInit {
             await this.bot.sendMessage(user.telegramId, `Твой код проверяет @${reviewer.userName}`)
             await this.bot.sendMessage(reviewer.telegramId, `Ты проверяешь код @${user.userName}`)
         }
+    }
+
+
+    async getMyReviewer(msg): Promise<void> {
+        const user: User = await this.usersRepository.findOne({
+            telegramId: msg.from.id
+        })
+        if (!user) {
+            return
+        }
+
+        const reviews: Review[] = await this.reviewModel.aggregate([
+            {
+                '$lookup': {
+                    from: 'users',
+                    localField: 'reviewer',
+                    foreignField: '_id',
+                    as: 'reviewer'
+                }
+            },
+            { $unwind: '$reviewer'},
+            {
+                $match: { user: user._id }
+            }
+        ])
+
+        if (!reviews.length) {
+            return
+        }
+
+        for (const review of reviews) {
+            await this.bot.sendMessage(msg.from.id, `Твой код проверяет @${review.reviewer.userName}`)
+        }
+    }
+
+    async getUsersWhoIReview(msg): Promise<void> {
+        const user: User = await this.usersRepository.findOne({
+            telegramId: msg.from.id
+        })
+        if (!user) {
+            return
+        }
+
+        const reviews: Review[] = await this.reviewModel.aggregate([
+            {
+                '$lookup': {
+                    from: 'users',
+                    localField: 'user',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user'},
+            {
+                $match: { reviewer: user._id }
+            }
+        ])
+
+        if (!reviews.length) {
+            return
+        }
+
+        for (const review of reviews) {
+            await this.bot.sendMessage(msg.from.id, `Ты проверяешь код @${review.user.userName}`)
+        }
+    }
+
+    async disableUser(msg): Promise<void> {
+        if (!this.admin_chat_ids.includes(msg.from.id)) {
+            return
+        }
+
+        const userNickname = msg.text.substring(msg.text.indexOf('/disable_user') + '/disable_user'.length).trim().replace('@', '')
+        const user: User = await this.usersRepository.findOne({
+            userName: userNickname
+        })
+
+        if (!user || !user.is_active) {
+            return
+        }
+
+        user.is_active = false
+        await user.save()
+        await this.bot.sendMessage(user.telegramId, 'Я запрещаю тебе участвовать в код-ревью')
+    }
+
+    async enableUser(msg): Promise<void> {
+        if (!this.admin_chat_ids.includes(msg.from.id)) {
+            return
+        }
+
+        const userNickname = msg.text.substring(msg.text.indexOf('/enable_user') + '/enable_user'.length).trim().replace('@', '')
+        const user: User = await this.usersRepository.findOne({
+            userName: userNickname
+        })
+
+        if (!user || user.is_active) {
+            return
+        }
+
+        user.is_active = true
+        await user.save()
+        await this.bot.sendMessage(user.telegramId, 'Я запрещаю тебе <b>не участвовать</b> в код-ревью', { parse_mode : 'HTML' })
     }
 }

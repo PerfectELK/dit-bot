@@ -8,7 +8,7 @@ services:
       - "7070:7070"
     volumes:
       - ./../src/:/usr/src/app/src/
-      - ./../.env:/usr/src/app/src/.env
+      - ./../.env:/usr/src/app/.env
     command: npm run start:dev
   mongo:
     image: mongo:6.0

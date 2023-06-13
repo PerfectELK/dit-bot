@@ -15,10 +15,4 @@ export class ReviewController {
         return ''
     }
 
-    @Get('test')
-    async test(): Promise<string> {
-        await this.reviewService.test()
-        return ''
-    }
-
 }

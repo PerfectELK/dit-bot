@@ -6,4 +6,5 @@ export const UserSchema = new mongoose.Schema({
     userName: String,
     role: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
     messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'UserMessage' }],
+    is_active: Boolean
 })

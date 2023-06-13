@@ -29,7 +29,10 @@ export class ReviewService {
                     as: 'role'
                 }
             },
-            { $unwind: '$role'}
+            { $unwind: '$role'},
+            {
+                $match: { is_active: true }
+            }
         ])
 
         for (const role of roles) {
@@ -60,20 +63,9 @@ export class ReviewService {
 
     }
 
-
     async clearCurrentReviewers(): Promise<void>
     {
         await this.reviewModel.deleteMany({})
-    }
-
-    async test(): Promise<void>
-    {
-        const reviews = await this.reviewModel.find({})
-
-        reviews.forEach(await(async (item) => {
-            const u = item
-            console.log(u)
-        }))
     }
 
 }

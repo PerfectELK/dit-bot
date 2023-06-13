@@ -7,9 +7,9 @@ export class TelegramController {
     private telegramService: TelegramService
     ) {}
 
-    @Post('message')
+    @Post(`message/${process.env.APP_KEY}`)
     async ping(@Req() req): Promise<string> {
-        console.log(req.body)
+        //console.log(req.body) Лютый дебаг
         if (req.body.callback_query) {
             // Todo логика колбэков, потом сделаю, а может и нет
             return ''

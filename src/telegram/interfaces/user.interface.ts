@@ -9,4 +9,5 @@ export interface User extends Document {
     userName: string,
     role: Role['_id'],
     messages: UserMessage['_id'][],
+    is_active: boolean,
 }

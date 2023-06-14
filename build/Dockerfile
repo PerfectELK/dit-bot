@@ -1,4 +1,4 @@
-FROM node:20.2.0-buster
+FROM node:20.2.0-buster AS develop
 
 WORKDIR /usr/src/app
 
@@ -16,3 +16,14 @@ RUN npm i --save-dev webpack-node-externals run-script-webpack-plugin webpack
 
 COPY .env ./
 COPY src ./src
+
+RUN npm run build
+
+FROM node:20.2.0-buster AS production
+
+WORKDIR /usr/src/app
+
+COPY --from=develop /usr/src/app/dist ./dist
+COPY --from=develop /usr/src/app/node_modules ./node_modules
+
+CMD ["node", "dist/main"]

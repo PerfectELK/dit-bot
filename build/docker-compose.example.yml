@@ -4,12 +4,14 @@ services:
     build:
       context: ../
       dockerfile: "build/Dockerfile"
+      target: production
     ports:
       - "7070:7070"
     volumes:
       - ./../src/:/usr/src/app/src/
       - ./../.env:/usr/src/app/.env
-    command: npm run start:dev
+    #if need dev
+    #command: npm run start:dev
   mongo:
     image: mongo:6.0
     restart: always
